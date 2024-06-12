@@ -1,54 +1,57 @@
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import train_test_split
+import torch
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import classification_report, accuracy_score
-import pickle
-from constant import *
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import classification_report
+import constants as J
+import helper as JH
 
-class KNN():
-    def __init__(self):
-        self.x = None
-        self.y = None
-        self.getDataset()
+class KNNClassifier:
+    def __init__(self, n_neighbors=5, weights='uniform', algorithm='auto', random_state=42):
+        self.n_neighbors = n_neighbors
+        self.weights = weights
+        self.algorithm = algorithm
+        self.random_state = random_state
+        self.model = None
+        self.scaler = None
 
-    def getDataset(self):
-        features = np.load(FEATURES_FILE_PATH)
-        self.x = features[:, 0, :]
-        self.y = np.array(pd.read_csv(DATASET_FILE_PATH)['Rating'][:8000])
+    def build(self):
+        self.model = KNeighborsClassifier(n_neighbors=self.n_neighbors, weights=self.weights, algorithm=self.algorithm)
+        self.scaler = StandardScaler()
 
-    def train(self, max_iter):
-        last_model = None
-        max_score = 0
+    def train_model(self, features, labels, test_size=0.2, epochs=1):
+        for i in range(0, epochs):
+            # Convert features and labels to numpy arrays if they are PyTorch tensors
+            if isinstance(features, torch.Tensor):
+                features = features.numpy()
+            if isinstance(labels, torch.Tensor):
+                labels = labels.numpy()
 
-        for i in range(1, max_iter):
-            X_train, X_test, y_train, y_test = train_test_split(self.x, self.y, test_size=0.2, random_state=42)
-            model = KNeighborsClassifier(n_neighbors=i)
-            model.fit(X_train, y_train)
-            # Print report ------------------------------------------< JOHN TAG
-            y_pred = model.predict(X_test)
-            print(classification_report(y_test, y_pred))
-            accur_score = accuracy_score(y_test, y_pred)
-            if(accur_score > max_score):
-                last_model = model
-                max_score = accur_score
+            # Split the data into training and testing sets
+            X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=test_size, random_state=self.random_state)
 
-        # Export model ------------------------------------------< JOHN TAG
-        with open(TRAINED_KNN_MODEL_FILE_PATH, 'wb') as file:
-            pickle.dump(last_model, file)
-        
-        # Print best result ------------------------------------------< JOHN TAG
-        print("> MAX_ACCURACY_SCORE: ", max_score)
-        print("> MODEL: \n", last_model)
+            # Standardize the features
+            X_train = self.scaler.fit_transform(X_train)
+            X_test = self.scaler.transform(X_test)
 
-    def predict(self, x_pre):
-        # Đọc mô hình từ file PKL
-        with open(TRAINED_KNN_MODEL_FILE_PATH, 'rb') as file:
-            loaded_model = pickle.load(file)
-        y_pre = loaded_model.predict(x_pre)
-        return y_pre[0]
+            # Train the KNN model
+            self.model.fit(X_train, y_train)
 
-d_tree = KNN()
-d_tree.train(100)
-# print(d_tree.predict(d_tree.x[:1, :]))
-# print(d_tree.y[-1])
+            # Predict on the test set and print the classification report
+            y_pred = self.model.predict(X_test)
+            print(classification_report(y_test, y_pred, target_names=['Tiêu cực', 'Trung lập', 'Tích cực']))
+
+            # Export model
+            JH.save_model(self.model, 'knn_model.pkl')
+
+    def predict(self, new_data):
+        # Convert new data to numpy array if it is a PyTorch tensor
+        if isinstance(new_data, torch.Tensor):
+            new_data = new_data.numpy()
+
+        # Standardize the new data
+        new_data = self.scaler.transform(new_data)
+
+        # Predict the labels for the new data
+        predictions = self.model.predict(new_data)
+        return predictions
