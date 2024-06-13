@@ -1,10 +1,20 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from predicting import Predictor
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
 predictor = Predictor()
+
+# Thêm middleware CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Cho phép tất cả các nguồn gốc (thay đổi theo yêu cầu của bạn)
+    allow_credentials=True,
+    allow_methods=["*"],  # Cho phép tất cả các phương thức HTTP
+    allow_headers=["*"],  # Cho phép tất cả các header
+)
 
 class Data(BaseModel):
     model: str
