@@ -46,4 +46,5 @@ class Predictor():
             return result
 
 # predictor = Predictor()
-# predictor.predict_text("svm", {'title': 'Đắt và mất vệ sinh', 'content': 'Giá thì đắt nhưng khâu vệ sinh lại không tốt. Không thể hài lòng với số tiền bỏ ra. Nên xem xét lại'})
+# predictor.predict_text("svm", {'title': 'Rẻ và vệ sinh tốt', 'content': 'Hãng này giá rẻ nhưng vệ sinh rất tốt. Trải nghiệm này xứng đáng.'})
+# predictor.predict_text("svm", {'title': 'Tiếp viên phục vụ tệ', 'content': 'Hãng này có tiếp viên phục vụ khách kém. Làm khách trễ mất chuyến bay quan trọng.'})

@@ -2,25 +2,26 @@ import torch
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 import constants as J
 import helper as JH
 
 class KNNClassifier:
-    def __init__(self, n_neighbors=5, weights='uniform', algorithm='auto', random_state=42):
-        self.n_neighbors = n_neighbors
+    def __init__(self, max_n_neighbors=5, weights='uniform', algorithm='auto', random_state=42):
+        self.max_n_neighbors = max_n_neighbors
         self.weights = weights
         self.algorithm = algorithm
         self.random_state = random_state
         self.model = None
         self.scaler = None
 
-    def build(self):
-        self.model = KNeighborsClassifier(n_neighbors=self.n_neighbors, weights=self.weights, algorithm=self.algorithm)
-        self.scaler = StandardScaler()
-
     def train_model(self, features, labels, test_size=0.2, epochs=1):
-        for i in range(0, epochs):
+        self.scaler = StandardScaler()
+        max_accuracy = 0
+        n_neighbors_selected = 0
+        for n_neighbors in range(1, self.max_n_neighbors):
+            model = KNeighborsClassifier(n_neighbors=n_neighbors, weights=self.weights, algorithm=self.algorithm)
+
             # Convert features and labels to numpy arrays if they are PyTorch tensors
             if isinstance(features, torch.Tensor):
                 features = features.numpy()
@@ -35,14 +36,21 @@ class KNNClassifier:
             X_test = self.scaler.transform(X_test)
 
             # Train the KNN model
-            self.model.fit(X_train, y_train)
+            model.fit(X_train, y_train)
 
             # Predict on the test set and print the classification report
-            y_pred = self.model.predict(X_test)
+            y_pred = model.predict(X_test)
+            accuracy = accuracy_score(y_test, y_pred)
             print(classification_report(y_test, y_pred, target_names=['Tiêu cực', 'Trung lập', 'Tích cực']))
+            print(f"Accuracy: {accuracy}")
+            if accuracy > max_accuracy:
+                self.model = model
+                max_accuracy = accuracy
+                n_neighbors_selected = n_neighbors
 
-            # Export model
-            JH.save_model(self.model, 'knn_model.pkl')
+        # Export model
+        JH.save_model(self.model, 'knn_model.pkl')
+        print(f"Max accuracy: {max_accuracy} when n_neighbors = {n_neighbors_selected}" )
 
     def predict(self, new_data):
         # Convert new data to numpy array if it is a PyTorch tensor

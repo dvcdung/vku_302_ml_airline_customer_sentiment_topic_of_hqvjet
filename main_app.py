@@ -27,5 +27,7 @@ def read_root():
 
 @app.post("/analyze-sentiment/")
 def analyze_sentiment(data: Data):
+    prediction = []
     result = predictor.predict_text(data.model, {'title': data.title, 'content': data.content})
-    return {"result": "Positive" if result[0] == 2 else "Neutral" if result[0] == 1 else "Negative"}
+    prediction.append(int(result[0]))
+    return {"prediction": prediction}

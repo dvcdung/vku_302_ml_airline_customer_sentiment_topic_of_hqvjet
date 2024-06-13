@@ -30,8 +30,7 @@ class Trainer():
             x_data = torch.mean(self.x_data, dim=1)
             # x_data = self.x_data.view(self.x_data.size(0), -1)[:, :10000]
             y_data = self.y_data
-            classificer = KNNClassifier(n_neighbors=5, weights='uniform', algorithm='auto', random_state=42)
-            classificer.build()
+            classificer = KNNClassifier(max_n_neighbors=100, weights='uniform', algorithm='auto', random_state=42)
             classificer.train_model(x_data, y_data, test_size=0.2, epochs=epochs)
         elif option == "nb":
             # x_data = torch.mode(self.x_data, dim=1).values
